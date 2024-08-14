@@ -6,6 +6,7 @@ library(cogena)
 library(ggpubr)
 library(fgsea)
 library(openxlsx)
+library(archive)
 
 #run the RNAseq analysis script first
 source("3 - RNAseq analysis.R")
@@ -13,7 +14,7 @@ source("3 - RNAseq analysis.R")
 #---------------------------------------------------------------------------------------------------------------------------------
 # CMAP analysis - prepare genesets from the CMAP data
 # NOTE - this section takes ~2.5 hours to run. To skip this part, load the following file containing the results of this section:
-CMAP_analysis <- read_csv("Data/CMAP analysis.csv")
+CMAP_analysis <- read.csv(archive_read(archive = "Data/CMAP analysis.7z", file = "CMAP analysis.csv"))
 # and skip to the next section
 #---------------------------------------------------------------------------------------------------------------------------------
 

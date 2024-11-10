@@ -91,6 +91,46 @@ GMT_files <- c("CMAP TS complete gene set up (20 genes).gmt", "CMAP TS complete 
               "CMAP TS complete gene set down (20 genes).gmt", "CMAP TS complete gene set down (50 genes).gmt", 
               "CMAP TS complete gene set down (100 genes).gmt", "CMAP TS complete gene set down (200 genes).gmt")
 
+#Function for calculating enrichment using CAMERA
+CameraFunction <- function(contr.matrix1, V1, design1, idx1,
+                           contr.matrix2, V2, design2, idx2) {
+  cam.list <- list()
+  for(n in 1:dim(contr.matrix1)[2]) {
+    name <- names(contr.matrix1[,n])[contr.matrix1[,n] == 1]
+    
+    cam.list[[n]] <- camera(V1, idx1, design1, contrast=contr.matrix1[,n]) %>% 
+      as_tibble(rownames = "pathway")   %>% 
+      mutate(result = ifelse(Direction == "Up", PValue, -PValue)) %>% 
+      dplyr::select(pathway, result) 
+    
+    names(cam.list[[n]])[names(cam.list[[n]]) == "result"] <- name
+    print(n)
+    
+  }
+  cam.object1 <- Reduce(full_join, cam.list)
+  
+  cam.list <- list()
+  for(n in 1:dim(contr.matrix2)[2]) {
+    name <- names(contr.matrix2[,n])[contr.matrix2[,n] == 1]
+    
+    cam.list[[n]] <- camera(V2, idx2, design2, contrast=contr.matrix2[,n]) %>% 
+      as_tibble(rownames = "pathway") %>% 
+      mutate(result = ifelse(Direction == "Up", PValue, -PValue)) %>% 
+      dplyr::select(pathway, result) 
+    
+    names(cam.list[[n]])[names(cam.list[[n]]) == "result"] <- name
+    print(n+8)
+  }
+  cam.object2 <- Reduce(full_join, cam.list)
+  
+  cam.object <- full_join(cam.object1, cam.object2, by = "pathway")
+  cam.object.log <- cam.object %>% 
+    mutate(across(where(is.numeric), ~ifelse(.x>0, -log10(.x), log10(abs(.x)))))
+  
+  return(cam.object.log)
+}
+
+#Calculate enrichement scores
 Camera_result <- tibble("pathway" = names(gmt2list(paste0("Data/", GMT_files[1])))) 
 
 for (n in 1:8) {
